@@ -2,7 +2,7 @@ from datetime import datetime
 
 STATUS_PERMITIDOS = {"Pendente", "Em Andamento", "Concluida"}
 PRIORIDADES_PERMITIDAS = {"Baixa", "Media", "Alta"}
-CATEGORIA_PERMITIDAS = {"Trabalho", "Casa", "Estudo", "Urgente", "Lazer", "Outros"}
+CATEGORIA_PERMITIDAS = {"Trabalho", "Estudo", "Casa", "Finanças", "Saúde", "Compras", "Compromissos","Pessoal", "Lazer", "Outros"}
 
 NOMES_CAMPOS = {
     "titulo": "título",
@@ -57,7 +57,6 @@ def validar_dados_tarefa(titulo, descricao, status, data_hora, prioridade, categ
         "descricao": descricao,
         "status": status,
         "data_hora": data_hora,
-        "prioridade": prioridade,
-        "categoria": categoria
+        "prioridade": prioridade
     }
     return validar_tarefa_parcial(dados_completos)

@@ -50,7 +50,8 @@ def criar_tarefa_route():
         dados.get('descricao'),
         dados.get('status'),
         dados.get('data_hora'),
-        dados.get('prioridade')
+        dados.get('prioridade'),
+        dados.get('categoria')
     )
 
     if erros:
