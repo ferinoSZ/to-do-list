@@ -1,4 +1,4 @@
-import { API_BASE_URL, request } from './api.js'
+import { API_BASE_URL, request, sendRequest } from './api.js'
 
 const TASKS_PATH = import.meta.env.VITE_TASKS_PATH || '/tarefas'
 
@@ -75,6 +75,15 @@ export async function getTasks(signal) {
   return list.map(normalizeTask)
 }
 
+export async function suggestCategory(description, signal) {
+  const data = await sendRequest(`${TASKS_PATH}/sugestao-categoria`, {
+    method: 'POST',
+    body: JSON.stringify({ descricao: description }),
+    signal,
+  })
+  return data.categoria
+}
+
 function taskFields(task) {
   return {
     titulo: task.title,
@@ -90,9 +99,11 @@ export function patchTask(id, fields) {
   return request(`${TASKS_PATH}/${id}`, { method: 'PATCH', body: JSON.stringify(fields) })
 }
 
-export function updateTask(original, edited) {
+export async function updateTask(original, edited) {
   const previous = taskFields(original)
-  const changes = Object.entries(taskFields(edited)).filter(([key, value]) => previous[key] !== value)
+  const fields = taskFields(edited)
+  if (!fields.categoria) fields.categoria = await suggestCategory(fields.descricao)
+  const changes = Object.entries(fields).filter(([key, value]) => previous[key] !== value)
   if (changes.length) return patchTask(original.id, Object.fromEntries(changes))
 }
 

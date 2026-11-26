@@ -1,6 +1,6 @@
 from dao.tarefas_dao import TarefasDAO
 from servicos.validacao_tarefa import validar_dados_tarefa, validar_tarefa_parcial
-from servicos.categorizador import categorizador
+from servicos.categorizador import resolver_categoria
 
 def criar_tarefa(dados, usuario_id):
     titulo = dados.get('titulo').strip()
@@ -8,12 +8,7 @@ def criar_tarefa(dados, usuario_id):
     status = dados.get('status').strip()
     data_hora = dados.get('data_hora').strip()
     prioridade = dados.get('prioridade').strip()
-    categoria = dados.get('categoria') or ""
-
-    if categoria:
-        categoria = categoria.strip()
-    if not categoria:
-        categoria = categorizador.prever(descricao)
+    categoria = resolver_categoria(dados.get('categoria'), descricao)
 
     resultado = TarefasDAO.criar_tarefa_dao(titulo, descricao, status, data_hora, prioridade, categoria, usuario_id)
     if resultado:
@@ -52,7 +47,7 @@ def editar_tarefa(tarefa_id, usuario_id, dados):
         status=str(status).strip(),
         data_hora=str(data_hora).strip(),
         prioridade=str(prioridade).strip(),
-        categoria=str(categoria).strip() if categoria else None,
+        categoria=resolver_categoria(categoria, descricao),
         id=tarefa_id,
         usuario_id=usuario_id
     )

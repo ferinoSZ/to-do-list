@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 
+from servicos.categorizador import categorizador
 from servicos.login import validar_login
 from servicos.cadastro import cadastrar_usuario
 from servicos.tarefas import atualizar_parcial_tarefa, criar_tarefa, editar_tarefa, listar_tarefas, excluir_tarefa
@@ -33,6 +34,17 @@ def consultar_sessao():
 def logout():
     session.clear()
     return jsonify({"message": "Logout realizado com sucesso!"}), 200
+
+@routes_bp.post('/tarefas/sugestao-categoria')
+def sugerir_categoria():
+    if not session.get('usuario_id'):
+        return jsonify(message="Usuário não autenticado!"), 401
+    dados = request.get_json(silent=True)
+    descricao = dados.get('descricao') if isinstance(dados, dict) else None
+    if not isinstance(descricao, str) or len(descricao.encode('utf-8')) > 65535:
+        return jsonify(message="Envie uma descrição de até 65.535 bytes."), 400
+    return jsonify(categoria=categorizador.prever(descricao.strip()))
+
 
 @routes_bp.route('/tarefas', methods=['POST'])
 def criar_tarefa_route():

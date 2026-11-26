@@ -59,4 +59,8 @@ def validar_dados_tarefa(titulo, descricao, status, data_hora, prioridade, categ
         "data_hora": data_hora,
         "prioridade": prioridade
     }
+    if categoria is not None and not isinstance(categoria, str):
+        return ["A categoria deve ser um texto."]
+    if categoria and categoria.strip():
+        dados_completos["categoria"] = categoria
     return validar_tarefa_parcial(dados_completos)

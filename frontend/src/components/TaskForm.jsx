@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { suggestCategory } from '../services/tasksApi.js'
 import { CloseIcon, SaveIcon } from './Icons.jsx'
 
 const initialForm = {
@@ -8,10 +9,10 @@ const initialForm = {
   dueTime: '',
   status: 'Pendente',
   priority: 'Baixa',
-  category: 'Outros',
+  category: '',
 }
 
-const categories = ['Trabalho', 'Casa', 'Estudo', 'Urgente', 'Lazer', 'Outros']
+const categories = ['Casa', 'Compras', 'Compromissos', 'Estudo', 'Finanças', 'Lazer', 'Pessoal', 'Saúde', 'Trabalho', 'Urgente', 'Outros']
 
 export default function TaskForm({ mode, sourceTask, restored, onDraft, draftStatus, onSubmit, onClose, isSaving, error }) {
   const isEditing = mode === 'edit'
@@ -31,6 +32,27 @@ export default function TaskForm({ mode, sourceTask, restored, onDraft, draftSta
   const submitLabel = isEditing ? 'Salvar alterações' : isDuplicate ? 'Criar cópia' : 'Criar tarefa'
   const requireDescription = !isEditing || Boolean(sourceTask?.description)
   const requireSchedule = !isEditing || Boolean(sourceTask?.dueDate || form.dueDate || form.dueTime)
+
+  const [prediction, setPrediction] = useState(null)
+  const autoDescription = form.category ? '' : form.description.trim()
+  const currentPrediction = prediction?.description === autoDescription ? prediction : null
+
+  useEffect(() => {
+    if (autoDescription.length < 3) return
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      try {
+        const category = await suggestCategory(autoDescription, controller.signal)
+        if (!controller.signal.aborted) setPrediction({ description: autoDescription, category })
+      } catch {
+        if (!controller.signal.aborted) setPrediction({ description: autoDescription, failed: true })
+      }
+    }, 450)
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [autoDescription])
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -60,8 +82,7 @@ export default function TaskForm({ mode, sourceTask, restored, onDraft, draftSta
     form.title.trim() &&
     (!requireDescription || form.description.trim()) &&
     (!requireSchedule || (form.dueDate && form.dueTime)) &&
-    form.priority &&
-    form.category
+    form.priority
   )
 
   return (
@@ -125,15 +146,23 @@ export default function TaskForm({ mode, sourceTask, restored, onDraft, draftSta
               </select>
             </label>
 
-            <label className="field">
-              <span>Categoria <b>*</b></span>
-              <select name="category" value={form.category} onChange={handleChange} required>
-                {sourceTask?.category && !categories.includes(sourceTask.category) && (
-                  <option value={sourceTask.category}>{sourceTask.category}</option>
-                )}
-                {categories.map(category => <option key={category} value={category}>{category}</option>)}
-              </select>
-            </label>
+            <div className="category-field">
+              <label className="field">
+                <span>Categoria</span>
+                <select name="category" value={form.category} onChange={handleChange}
+                  aria-describedby={!form.category ? 'category-suggestion' : undefined}>
+                  <option value="">Automática (IA)</option>
+                  {form.category && !categories.includes(form.category) && <option>{form.category}</option>}
+                  {categories.map(category => <option key={category}>{category}</option>)}
+                </select>
+              </label>
+              <small id="category-suggestion" className="category-suggestion" role="status">
+                {!form.category && (autoDescription.length < 3 ? 'Escreva a descrição para receber uma sugestão.'
+                  : currentPrediction?.failed ? 'A prévia está indisponível. Você pode salvar ou escolher uma categoria.'
+                  : currentPrediction ? <>Sugestão da IA · <strong>{currentPrediction.category}</strong></>
+                  : 'Analisando descrição…')}
+              </small>
+            </div>
           </div>
 
           {isEditing && (

@@ -23,6 +23,10 @@ O grande destaque deste projeto é a autonomia inteligente no cadastro de tarefa
 
 ---
 
+No formulário, **Automática (IA)** mostra a sugestão após uma pausa na digitação. Ao salvar, inclusive pela agenda, a API usa a descrição final ou a categoria escolhida pela pessoa.
+
+Para atualizar um banco criado com a lista antiga de categorias, execute `sql/categorias_tarefa.sql` no banco do projeto. Instalações novas já incluem as categorias em `sql/schemas.sql`.
+
 ## 📁 Arquitetura do Projeto
 
 ```text
@@ -44,6 +48,7 @@ api-tarefas/
 | Método | Rota | Descrição |
 | :--- | :--- | :--- |
 | `POST` | `/tarefas` | Cria uma nova tarefa (com suporte a auto-categorização via IA) |
+| `POST` | `/tarefas/sugestao-categoria` | Recebe `{"descricao":"Comprar pão e leite no mercado"}` e retorna `{"categoria":"Compras"}` para a sessão autenticada, sem gravar uma tarefa. |
 | `GET` | `/tarefas` | Lista todas as tarefas cadastradas |
 | `PATCH` | `/tarefas/<id>` | Atualiza dados da tarefa (permitindo alteração manual de categoria) |
 | `DELETE` | `/tarefas/<id>` | Remove uma tarefa do sistema |

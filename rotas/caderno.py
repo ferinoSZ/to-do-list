@@ -6,6 +6,7 @@ from pymysql import MySQLError
 from pymysql.cursors import DictCursor
 
 from database import pegar_conexao
+from servicos.categorizador import resolver_categoria
 from servicos.validacao_tarefa import validar_dados_tarefa, validar_tarefa_parcial
 
 caderno_bp = Blueprint("caderno", __name__, url_prefix="/caderno")
@@ -168,6 +169,7 @@ def publicar(chave):
         if item["arquivado_em"] or item["revisao"] > rev:
             abort(409, "A entrada mudou. Feche o formulário e abra a versão atual.")
         fields = campos_tarefa(dados["form"])
+        fields["categoria"] = resolver_categoria(fields["categoria"], fields["descricao"])
         if dados["mode"] == "edit":
             original = campos_tarefa(dados["source"])
             changes = {key: value for key, value in fields.items() if value != original[key]}
@@ -189,6 +191,7 @@ def publicar(chave):
             cursor.execute("""INSERT INTO tarefa (titulo,descricao,status,data_hora,prioridade,categoria,usuario_id)
                               VALUES (%s,%s,%s,%s,%s,%s,%s)""", (*fields.values(), usuario))
             tarefa = cursor.lastrowid
+        dados["form"]["category"] = fields["categoria"]
         estado = "vinculado" if body.get("fromBook") is True else "retirado"
         cursor.execute("""UPDATE caderno_item SET estado=%s,tarefa_id=%s,concluido=%s,dados=%s
                           WHERE usuario_id=%s AND chave=%s""",

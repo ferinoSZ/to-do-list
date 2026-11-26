@@ -35,3 +35,7 @@ class CategorizadorInteligente:
         return predicao[0]
 
 categorizador = CategorizadorInteligente()
+
+
+def resolver_categoria(categoria, descricao):
+    return (categoria or "").strip() or categorizador.prever(descricao)

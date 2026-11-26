@@ -16,7 +16,7 @@ CREATE TABLE tarefa (
     status ENUM('Pendente', 'Em Andamento', 'Concluida') NOT NULL DEFAULT 'Pendente',
     data_hora DATETIME,
     prioridade ENUM('Alta', 'Media', 'Baixa') NOT NULL DEFAULT 'Baixa',
-    categoria ENUM('Trabalho', 'Casa', 'Estudo', 'Urgente', 'Lazer', 'Outros') NOT NULL DEFAULT 'Outros',
+    categoria ENUM('Trabalho', 'Casa', 'Estudo', 'Urgente', 'Lazer', 'Outros', 'Finanças', 'Saúde', 'Compras', 'Compromissos', 'Pessoal') NOT NULL DEFAULT 'Outros',
     usuario_id INT NOT NULL,
     FOREIGN KEY (usuario_id) REFERENCES usuario(id)
 );
