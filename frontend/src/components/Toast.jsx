@@ -13,7 +13,7 @@ export default function Toast({ toast, onClose }) {
 
       <div className="toast__content">
         <strong>{toast.title}</strong>
-        <span>{toast.message}</span>
+        {toast.message && <span>{toast.message}</span>}
       </div>
 
       <button className="icon-button icon-button--subtle" onClick={onClose} type="button" aria-label="Fechar aviso">

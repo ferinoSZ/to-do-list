@@ -1,0 +1,96 @@
+/* O painel verde lembra a capa de um caderno. O formulário usa os mesmos
+   controles, cores de texto e superfícies da lista de tarefas. */
+.auth-shell {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 5vw, 72px);
+  background: #f5f5f1;
+}
+
+.auth-layout {
+  width: min(100%, 920px);
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: .88fr 1.12fr;
+  background: var(--card);
+  border: 1px solid #dedfd7;
+  border-radius: 24px;
+  box-shadow: 0 22px 65px -30px #383e3659;
+  overflow: hidden;
+}
+
+.auth-cover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 35px;
+  background-color: #dce5da;
+  background-image: linear-gradient(#657d6820 1px, transparent 1px), linear-gradient(90deg, #657d6820 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-right: 1px solid #d4ddd1;
+}
+
+.auth-brand { display: flex; align-items: center; gap: 10px; color: #26352d; font-size: 1.08rem; font-weight: 730; letter-spacing: -.035em; }
+.auth-brand > span { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: #293b30; color: white; }
+
+.notebook {
+  position: absolute;
+  top: 51%;
+  left: 50%;
+  width: 52%;
+  aspect-ratio: .78;
+  transform: translate(-48%, -40%) rotate(-10deg);
+  border: 1px solid #748775;
+  border-radius: 5px 18px 17px 5px;
+  background: linear-gradient(90deg, #566f5c 0 7%, #8a9f88 7% 8%, #b5c6ae 8% 100%);
+  box-shadow: 2px 4px 0 #f8f6eb, 4px 7px 0 #7f907b, 12px 20px 22px #40574030;
+}
+
+.notebook-ribbon { position: absolute; width: 9%; height: 23%; top: -1px; right: 13%; background: #344d3c; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); }
+.notebook-list { position: absolute; inset: 32% 14% auto 21%; display: grid; gap: 13px; padding: 17px 14px; background: #faf9ef; border: 1px solid #93a38e; border-radius: 4px; box-shadow: 1px 2px 0 #8f9f88; }
+.notebook-row { display: flex; gap: 9px; align-items: center; height: 13px; position: relative; }
+.notebook-row::before { content: ''; width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid #8a9887; }
+.notebook-row::after { content: ''; height: 3px; flex: 1; background: #c0c9b9; border-radius: 2px; }
+.notebook-row:last-child { width: 82%; }
+.notebook-row svg { position: absolute; left: -1px; bottom: 0; color: #405e48; }
+
+.auth-panel { align-self: center; padding: clamp(32px, 5vw, 64px); }
+.auth-panel h1 { font-size: clamp(2rem, 3.5vw, 2.65rem); line-height: 1.08; margin: 0 0 10px; outline: none; }
+.auth-intro { margin: 0 0 30px; color: #626762; line-height: 1.55; font-size: .96rem; }
+.auth-form { display: grid; gap: 17px; }
+.auth-form .field { gap: 7px; }
+.auth-form input { min-height: 46px; font-weight: 450; font-size: 1rem; }
+.auth-form input::placeholder { color: #727770; }
+.auth-form input:focus { border-color: #58705d; box-shadow: 0 0 0 3px #56755d26; }
+.password-control { position: relative; }
+.password-control input { padding-right: 49px; }
+.password-control input::-ms-reveal { display: none; }
+.password-toggle { display: grid; place-items: center; position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 42px; height: 40px; color: #535c54; border: 0; border-radius: 9px; background: transparent; }
+.password-toggle:hover { background: #e9eee7; }
+.password-toggle:active { background: #dce5da; }
+.auth-switch a:hover { color: #476450; }
+.auth-switch a:active { color: #202124; }
+.auth-panel :is(button, a):focus-visible { outline: 3px solid #54725c; outline-offset: 2px; }
+.auth-form small { display: flex; align-items: center; gap: 5px; color: #656b64; font-size: .79rem; line-height: 1.45; font-weight: 450; }
+.auth-form .password-ready { color: #376243; }
+.auth-submit { width: 100%; min-height: 46px; margin-top: 3px; }
+.auth-submit span { font-size: 1.12rem; }
+.auth-switch { margin: 24px 0 0; border-top: 1px solid var(--border); padding-top: 20px; color: #616660; font-size: .88rem; text-align: center; }
+.auth-switch a { color: #2d4a36; font-weight: 700; text-underline-offset: 3px; }
+.auth-notice, .auth-error { padding: 12px 14px; border-radius: 10px; font-size: .87rem; line-height: 1.45; }
+.auth-notice { display: flex; gap: 8px; align-items: center; margin: -10px 0 20px; color: #315a3d; background: #eef4ed; }
+.auth-notice svg { flex: none; }
+.auth-error { margin: 0; background: var(--danger-soft); color: var(--danger); }
+.account-actions { display: flex; align-items: center; gap: 10px; }
+
+@media (max-width: 740px) {
+  .auth-shell { padding: 18px; }
+  .auth-layout { max-width: 460px; min-height: 0; grid-template-columns: 1fr; }
+  .auth-cover { padding: 19px 24px; border-right: 0; border-bottom: 1px solid #d4ddd1; }
+  .notebook { display: none; }
+  .auth-panel { padding: 29px 24px; }
+  .auth-intro { margin-bottom: 23px; }
+  .account-actions { align-items: flex-end; flex-direction: column; }
+}

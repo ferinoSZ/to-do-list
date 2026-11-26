@@ -1,5 +1,4 @@
 from dao.tarefas_dao import TarefasDAO
-from servicos import categorizador
 from servicos.validacao_tarefa import validar_dados_tarefa, validar_tarefa_parcial
 from servicos.categorizador import categorizador
 
@@ -12,24 +11,28 @@ def criar_tarefa(dados, usuario_id):
     categoria = dados.get('categoria') or ""
 
     if categoria:
-        categoria = categorizador.strip()
+        categoria = categoria.strip()
     if not categoria:
         categoria = categorizador.prever(descricao)
 
-    novo_id = TarefasDAO.criar_tarefa_dao(titulo, descricao, status, data_hora, prioridade, categoria, usuario_id)
+    resultado = TarefasDAO.criar_tarefa_dao(titulo, descricao, status, data_hora, prioridade, categoria, usuario_id)
+    if resultado:
+        return {"message": "Não foi possível salvar a tarefa."}, 500
 
 
-    return {"message": "Tarefa criada com sucesso!"}
+    return {"message": "Tarefa criada com sucesso!"}, 200
 
 def listar_tarefas(usuario_id):
 
     tarefas = TarefasDAO.listar_tarefas(usuario_id)
+    if isinstance(tarefas, dict):
+        return {"message": "Não foi possível carregar as tarefas."}, 500
 
     for tarefa in tarefas:
         if tarefa.get('data_hora'):
             tarefa['data_hora'] = str(tarefa['data_hora'])
 
-    return {"tarefas": tarefas}
+    return {"tarefas": tarefas}, 200
 
 def editar_tarefa(tarefa_id, usuario_id, dados):
     titulo = dados.get('titulo')
@@ -91,6 +94,9 @@ def atualizar_parcial_tarefa(tarefa_id, usuario_id, dados):
 
 def excluir_tarefa(tarefa_id, usuario_id):
     resultado = TarefasDAO.excluir_tarefa_dao(tarefa_id, usuario_id)
+
+    if "Erro" in resultado.get("message", ""):
+        return {"message": "Não foi possível excluir a tarefa."}, 500
 
     if resultado.get("message") == "Tarefa não encontrada ou não autorizada!":
         return resultado, 404

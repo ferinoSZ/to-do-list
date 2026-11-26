@@ -1,103 +1,28 @@
-# To-do List — React + FastAPI
+# Minhas tarefas
 
-Frontend minimalista em React para um backend REST em FastAPI.
+Interface React para a API Flask do projeto. A página inicial apresenta o cadastro. Quem já tem conta pode usar **Entrar** ou acessar `/#login`. Depois de criar a conta, o usuário chega ao login com o e-mail preenchido. A sessão permite criar, buscar, filtrar, editar, concluir, reabrir, duplicar e excluir tarefas da conta. A exclusão exige confirmação.
 
-## Funcionalidades
+## Agenda de rascunhos
 
-- Carregar tarefas da API (`GET /tasks`)
-- Criar tarefas (`POST /tasks`)
-- Solicitar confirmação antes da exclusão
-- Excluir tarefas após confirmação (`DELETE /tasks/{id}`)
-- Toast de confirmação para criação, exclusão e erros
-- Botão flutuante `+` com tooltip acessível: "Criar nova tarefa"
-- Layout responsivo, teclado, foco visível e estados de carregamento/erro
+O preenchimento é gravado no navegador a cada alteração e sincronizado com a conta após uma pausa na digitação. Se a aba fechar antes da sincronização, abra a agenda no mesmo navegador e na mesma conta para recuperar a cópia local. Ao continuar uma entrada e salvar a tarefa, a folha acompanha seu status. O Arquivo morto guarda uma cópia dos dados no momento do arquivamento.
 
-## Stack
+Com a agenda aberta, arraste uma folha, use as setas do teclado ou escolha uma aba numerada na lateral. As páginas em branco também podem ser folheadas. Quando as quatro entradas de uma página estão concluídas, a aba ganha um visto. A página continua no caderno até você escolher **Limpar folha**.
 
-- React 19
-- Vite 8
-- JavaScript (JSX)
-- CSS sem framework
-- `fetch` nativo para HTTP
+Em bancos já instalados, execute `sql/caderno.sql` no banco do projeto. Em uma instalação nova, a tabela está incluída em `sql/schemas.sql`.
 
-## Requisitos
+## Desenvolvimento local
 
-Vite 8 requer Node.js 20.19+ ou 22.12+.
+1. Na raiz do projeto, instale as dependências com `python -m pip install -r requirements.txt`.
+2. Prepare o MySQL. Para um banco novo, use `sql/schemas.sql`. Em instalações anteriores, confira se a tabela `tarefa` já tem a coluna `usuario_id` vinculada a `usuario.id`. A migração de registros existentes depende de identificar seus proprietários.
+3. Na raiz, copie `config_example.py` para `config.py` caso precise de uma configuração nova. Defina as variáveis de ambiente `MYSQL_USER`, `MYSQL_PASSWORD` e `SECRET_KEY`. O exemplo usa o banco `lista` na porta 3306 de localhost. O comando para gerar a chave de sessão está no próprio arquivo.
+4. Inicie a API com `python app.py`. Em outro terminal, entre em `frontend`, execute `npm ci` e depois `npm run dev`. Abra [Minhas tarefas](http://localhost:5173).
 
-## Executando
+## Conexão e sessão
 
-```bash
-npm install
-copy .env.example .env
-npm run dev
-```
+O frontend usa `VITE_API_BASE_URL` e `VITE_TASKS_PATH`, configurados em `.env`. Os valores padrão apontam para `http://localhost:5000` e `/tarefas`. O Flask aceita o frontend de `http://localhost:5173` por padrão. Para outra origem, configure `FRONTEND_ORIGIN` no ambiente da API. Use o mesmo hostname em ambos para que o navegador envie o cookie de sessão.
 
-No PowerShell, o segundo comando pode ser:
+O cadastro usa `POST /criar`. O login e a saída usam `POST /login` e `POST /logout`. Ao abrir a página, a interface consulta `GET /sessao` para reconhecer uma sessão ativa. O botão de olho permite conferir a senha durante a digitação.
 
-```powershell
-Copy-Item .env.example .env
-```
+## Build
 
-A aplicação abre em `http://localhost:5173`.
-
-## Conexão com FastAPI
-
-Edite `.env`:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-VITE_TASKS_PATH=/tasks
-```
-
-O código de consumo fica centralizado em `src/services/tasksApi.js`.
-
-### Contrato esperado
-
-**GET `/tasks`**
-
-Pode retornar:
-
-```json
-[
-  {
-    "id": 1,
-    "title": "Estudar React",
-    "description": "Revisar componentes e hooks",
-    "due_date": "2026-10-01",
-    "due_time": "19:30",
-    "status": "Pendente"
-  }
-]
-```
-
-Ou um objeto com `items` ou `tasks` contendo a lista.
-
-**POST `/tasks`**
-
-Body enviado pelo frontend:
-
-```json
-{
-  "title": "Estudar React",
-  "description": "Revisar componentes e hooks",
-  "due_date": "2026-10-01",
-  "due_time": "19:30"
-}
-```
-
-O ideal é a API responder com a tarefa criada, incluindo seu `id`.
-
-**DELETE `/tasks/{id}`**
-
-Exemplo: `DELETE /tasks/1`.
-
-## Onde adaptar se seu FastAPI usar outro contrato
-
-Edite apenas `src/services/tasksApi.js`:
-
-- `VITE_TASKS_PATH` para o caminho do router (por exemplo, `/api/tasks`)
-- `normalizeTask()` para mapear os nomes enviados pelo backend
-- `createTask()` se o schema do POST for diferente
-- `deleteTask()` se a rota de exclusão tiver outro formato
-
-A UI não precisa ser alterada para ajustes de contrato da API.
+Execute `npm run build` na pasta `frontend`. O resultado fica em `dist/`. A política de segurança de conteúdo do build autoriza conexões à origem da API configurada durante a compilação.

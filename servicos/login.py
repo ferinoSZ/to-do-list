@@ -1,41 +1,22 @@
-from flask import jsonify, session
+from flask import session
+from pymysql import MySQLError
+from werkzeug.security import check_password_hash
 
 from database import pegar_conexao
-from werkzeug.security import check_password_hash
 
 
 def validar_login(email, senha):
-    if not email or not senha:
-        return {"message": "Todos os campos são obrigatórios!"}
-
-    cursor = None
-    conexao = None
-
+    if not isinstance(email, str) or not isinstance(senha, str) or not email.strip() or not senha:
+        return {"message": "Preencha o e-mail e a senha."}, 400
     try:
-        conexao = pegar_conexao()
-        cursor = conexao.cursor()
+        with pegar_conexao() as conexao, conexao.cursor() as cursor:
+            cursor.execute("SELECT id, senha FROM usuario WHERE email = %s", (email.strip(),))
+            usuario = cursor.fetchone()
+    except MySQLError:
+        return {"message": "Login indisponível. Tente novamente em instantes."}, 503
 
-        cursor.execute("SELECT id, senha FROM usuario WHERE email = %s", (email,))
-        resultado = cursor.fetchone()
-
-
-        if resultado is None:
-            return {"message": "Email ou senha inválidos!"}
-
-        id_usuario = resultado[0]
-        senha_hash = resultado[1]
-
-        if check_password_hash(senha_hash, senha):
-            session['usuario_id'] = id_usuario
-            return {"message": "Login realizado com sucesso!"}
-        else:
-            return {"message": "Email ou senha inválidos!"}
-        
-    except Exception as e:
-        return {"message": f"Erro ao realizar login: {str(e)}"}
-    
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexao is not None:
-            conexao.close()
+    if not usuario or not check_password_hash(usuario[1], senha):
+        return {"message": "E-mail ou senha incorretos."}, 401
+    session.clear()
+    session["usuario_id"] = usuario[0]
+    return {"message": "Login realizado com sucesso!"}, 200

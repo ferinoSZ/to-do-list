@@ -1,136 +1,158 @@
 import { useState } from 'react'
-import { CloseIcon, PlusIcon } from './Icons.jsx'
+import { CloseIcon, SaveIcon } from './Icons.jsx'
 
 const initialForm = {
   title: '',
   description: '',
   dueDate: '',
   dueTime: '',
+  status: 'Pendente',
   priority: 'Baixa',
   category: 'Outros',
 }
 
-export default function TaskForm({ onSubmit, onClose, isSaving }) {
-  const [form, setForm] = useState(initialForm)
+const categories = ['Trabalho', 'Casa', 'Estudo', 'Urgente', 'Lazer', 'Outros']
+
+export default function TaskForm({ mode, sourceTask, restored, onDraft, draftStatus, onSubmit, onClose, isSaving, error }) {
+  const isEditing = mode === 'edit'
+  const isDuplicate = mode === 'duplicate'
+  const [form, setForm] = useState(() => restored ?? (sourceTask ? {
+    ...initialForm,
+    title: sourceTask.title,
+    description: sourceTask.description || '',
+    status: isEditing ? sourceTask.status : 'Pendente',
+    dueDate: isEditing ? (sourceTask.dueDate || '') : '',
+    dueTime: isEditing ? (sourceTask.dueTime || '') : '',
+    priority: sourceTask.priority || initialForm.priority,
+    category: sourceTask.category || initialForm.category,
+  } : initialForm))
+  const [hasDraft, setHasDraft] = useState(Boolean(restored))
+  const formLabel = isEditing ? 'Editar tarefa' : isDuplicate ? 'Duplicar tarefa' : 'Nova tarefa'
+  const submitLabel = isEditing ? 'Salvar alterações' : isDuplicate ? 'Criar cópia' : 'Criar tarefa'
+  const requireDescription = !isEditing || Boolean(sourceTask?.description)
+  const requireSchedule = !isEditing || Boolean(sourceTask?.dueDate || form.dueDate || form.dueTime)
 
   function handleChange(event) {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+    const next = { ...form, [name]: value }
+    setForm(next)
+    setHasDraft(true)
+    onDraft(next)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
 
-    const hasRequiredFields =
-      form.title.trim() &&
-      form.description.trim() &&
-      form.dueDate &&
-      form.dueTime &&
-      form.priority &&
-      form.category
+    if (!canSubmit || isSaving) return
 
-    if (!hasRequiredFields || isSaving) return
-
-    const created = await onSubmit({
+    await onSubmit({
       title: form.title.trim(),
       description: form.description.trim(),
       dueDate: form.dueDate,
       dueTime: form.dueTime,
-      status: 'Pendente',
+      status: form.status,
       priority: form.priority,
       category: form.category,
     })
-
-    if (created) setForm(initialForm)
   }
 
   const canSubmit = Boolean(
     form.title.trim() &&
-    form.description.trim() &&
-    form.dueDate &&
-    form.dueTime &&
+    (!requireDescription || form.description.trim()) &&
+    (!requireSchedule || (form.dueDate && form.dueTime)) &&
     form.priority &&
     form.category
   )
 
   return (
-    <section className="form-card" aria-label="Nova tarefa">
+    <section className="form-card" aria-label={formLabel}>
       <div className="form-card__header">
         <div>
-          <p className="eyebrow">Nova tarefa</p>
-          <h2>O que precisa ser feito?</h2>
+          <h2>{formLabel}</h2>
+          {isDuplicate && <p className="dialog-hint">Escolha a data e o horário da cópia.</p>}
         </div>
-        <button className="icon-button" onClick={onClose} type="button" aria-label="Fechar formulário">
+        <button className="icon-button" onClick={onClose} type="button" aria-label="Fechar formulário" disabled={isSaving}>
           <CloseIcon />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <label className="field field--full">
-          <span>Título <b>*</b></span>
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Ex.: Entregar trabalho de arquitetura"
-            autoFocus
-            required
-            maxLength={255}
-          />
-        </label>
-
-        <label className="field field--full">
-          <span>Descrição <b>*</b></span>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Descreva a tarefa."
-            rows={3}
-            required
-          />
-        </label>
-
-        <div className="field-grid">
-          <label className="field">
-            <span>Data <b>*</b></span>
-            <input name="dueDate" type="date" value={form.dueDate} onChange={handleChange} required />
+      <form onSubmit={handleSubmit} aria-busy={isSaving}>
+        <fieldset className="task-fields" disabled={isSaving}>
+          <label className="field field--full">
+            <span>Título <b>*</b></span>
+            <input
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              placeholder="Ex.: Entregar trabalho de arquitetura"
+              data-initial-focus={!isDuplicate || undefined}
+              required
+              maxLength={255}
+            />
           </label>
 
-          <label className="field">
-            <span>Horário <b>*</b></span>
-            <input name="dueTime" type="time" value={form.dueTime} onChange={handleChange} required />
-          </label>
-        </div>
-
-        <div className="field-grid">
-          <label className="field">
-            <span>Prioridade <b>*</b></span>
-            <select name="priority" value={form.priority} onChange={handleChange} required>
-              <option value="Alta">Alta</option>
-              <option value="Media">Média</option>
-              <option value="Baixa">Baixa</option>
-            </select>
+          <label className="field field--full">
+            <span>Descrição {requireDescription && <b>*</b>}</span>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Descreva a tarefa."
+              rows={3}
+              required={requireDescription}
+            />
           </label>
 
-          <label className="field">
-            <span>Categoria <b>*</b></span>
-            <select name="category" value={form.category} onChange={handleChange} required>
-              <option value="Trabalho">Trabalho</option>
-              <option value="Casa">Casa</option>
-              <option value="Estudo">Estudo</option>
-              <option value="Urgente">Urgente</option>
-              <option value="Lazer">Lazer</option>
-              <option value="Outros">Outros</option>
-            </select>
-          </label>
-        </div>
+          <div className="field-grid">
+            <label className="field">
+              <span>Data {requireSchedule && <b>*</b>}</span>
+              <input name="dueDate" type="date" value={form.dueDate} onChange={handleChange} data-initial-focus={isDuplicate || undefined} required={requireSchedule} />
+            </label>
 
+            <label className="field">
+              <span>Horário {requireSchedule && <b>*</b>}</span>
+              <input name="dueTime" type="time" value={form.dueTime} onChange={handleChange} required={requireSchedule} />
+            </label>
+          </div>
+
+          <div className="field-grid">
+            <label className="field">
+              <span>Prioridade <b>*</b></span>
+              <select name="priority" value={form.priority} onChange={handleChange} required>
+                <option value="Alta">Alta</option>
+                <option value="Media">Média</option>
+                <option value="Baixa">Baixa</option>
+              </select>
+            </label>
+
+            <label className="field">
+              <span>Categoria <b>*</b></span>
+              <select name="category" value={form.category} onChange={handleChange} required>
+                {sourceTask?.category && !categories.includes(sourceTask.category) && (
+                  <option value={sourceTask.category}>{sourceTask.category}</option>
+                )}
+                {categories.map(category => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </label>
+          </div>
+
+          {isEditing && (
+            <label className="field"><span>Status</span>
+              <select name="status" value={form.status} onChange={handleChange}>
+                <option value="Pendente">Pendente</option>
+                <option value="Em Andamento">Em andamento</option>
+                <option value="Concluida">Concluída</option>
+              </select>
+            </label>
+          )}
+        </fieldset>
+        {hasDraft && draftStatus && <small className="helper-text" role="status">{draftStatus}</small>}
+        {error && <p className="dialog-error" role="alert">{error}</p>}
         <div className="form-card__footer">
-          <span className="helper-text">O status inicial será Pendente.</span>
+          <button type="button" className="button button--ghost" onClick={onClose} disabled={isSaving}>{hasDraft ? 'Guardar e fechar' : 'Cancelar'}</button>
           <button className="button button--primary" type="submit" disabled={isSaving || !canSubmit}>
-            <PlusIcon size={18} />
-            {isSaving ? 'Salvando...' : 'Criar tarefa'}
+            <SaveIcon size={18} />
+            {isSaving ? 'Salvando…' : submitLabel}
           </button>
         </div>
       </form>

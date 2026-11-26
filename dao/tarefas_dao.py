@@ -1,4 +1,5 @@
 from database import pegar_conexao
+from pymysql.cursors import DictCursor
 
 class TarefasDAO:
     @staticmethod
@@ -43,9 +44,9 @@ class TarefasDAO:
 
         try:
             conexao = pegar_conexao()
-            cursor = conexao.cursor()
+            cursor = conexao.cursor(DictCursor)
 
-            sql = "SELECT * FROM tarefa WHERE usuario_id = %s"
+            sql = "SELECT id, titulo, descricao, status, data_hora, prioridade, categoria FROM tarefa WHERE usuario_id = %s"
             cursor.execute(sql, (usuario_id,))
             tarefas = cursor.fetchall()
 

@@ -1,34 +1,6 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '')
+import { API_BASE_URL, request } from './api.js'
+
 const TASKS_PATH = import.meta.env.VITE_TASKS_PATH || '/tarefas'
-
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(options.headers || {}),
-    },
-  })
-
-  const rawBody = await response.text()
-  let body = null
-
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody)
-    } catch {
-      body = rawBody
-    }
-  }
-
-  if (!response.ok) {
-    const message = body?.detail || body?.message || `Erro HTTP ${response.status}`
-    throw new Error(message)
-  }
-
-  return body
-}
 
 function splitDateTime(value) {
   if (!value) return { dueDate: null, dueTime: null }
@@ -92,8 +64,8 @@ export function normalizeTask(rawTask) {
   }
 }
 
-export async function getTasks() {
-  const data = await request(TASKS_PATH)
+export async function getTasks(signal) {
+  const data = await request(TASKS_PATH, { signal })
 
   if (data?.message && !Array.isArray(data?.tarefas)) {
     throw new Error(data.message)
@@ -103,19 +75,35 @@ export async function getTasks() {
   return list.map(normalizeTask)
 }
 
-export async function createTask(task) {
-  const dataHora = `${task.dueDate} ${task.dueTime}:00`
+function taskFields(task) {
+  return {
+    titulo: task.title,
+    descricao: task.description,
+    status: task.status,
+    data_hora: task.dueDate && task.dueTime ? `${task.dueDate} ${task.dueTime}:00` : null,
+    prioridade: task.priority,
+    categoria: task.category,
+  }
+}
 
+export function patchTask(id, fields) {
+  return request(`${TASKS_PATH}/${id}`, { method: 'PATCH', body: JSON.stringify(fields) })
+}
+
+export function updateTask(original, edited) {
+  const previous = taskFields(original)
+  const changes = Object.entries(taskFields(edited)).filter(([key, value]) => previous[key] !== value)
+  if (changes.length) return patchTask(original.id, Object.fromEntries(changes))
+}
+
+export function deleteTask(id) {
+  return request(`${TASKS_PATH}/${id}`, { method: 'DELETE' })
+}
+
+export async function createTask(task) {
   const data = await request(TASKS_PATH, {
     method: 'POST',
-    body: JSON.stringify({
-      titulo: task.title,
-      descricao: task.description,
-      status: task.status,
-      data_hora: dataHora,
-      prioridade: task.priority,
-      categoria: task.category,
-    }),
+    body: JSON.stringify(taskFields(task)),
   })
 
   if (data?.message && data.message !== 'Tarefa criada com sucesso!') {

@@ -9,31 +9,29 @@ routes_bp = Blueprint('routes', __name__)
 
 @routes_bp.route('/criar', methods=['POST'])
 def cadastro_usuario():
-    data = request.get_json()
-
-
-    nome = data.get('nome')
-    email = data.get('email')
-    senha = data.get('senha')
-
-    
-    resultado = cadastrar_usuario(nome, email, senha)
-    return jsonify(resultado)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"message": "Envie os dados do cadastro em JSON."}), 400
+    resultado, status = cadastrar_usuario(data.get('nome'), data.get('email'), data.get('senha'))
+    return jsonify(resultado), status
 
 @routes_bp.route('/login', methods=['POST'])
 def login_usuario():
-    data = request.get_json()
-    email = data.get('email')
-    senha = data.get('senha')
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"message": "Envie os dados de acesso em JSON."}), 400
+    resultado, status = validar_login(data.get('email'), data.get('senha'))
+    if status == 200:
+        resultado["usuario_id"] = session["usuario_id"]
+    return jsonify(resultado), status
 
-    
-    resultado = validar_login(email, senha)
-
-    return jsonify(resultado)
+@routes_bp.get('/sessao')
+def consultar_sessao():
+    return jsonify({"autenticado": bool(session.get('usuario_id')), "usuario_id": session.get("usuario_id")})
 
 @routes_bp.route('/logout', methods=['POST'])
 def logout():
-    session.pop('usuario_id', None)
+    session.clear()
     return jsonify({"message": "Logout realizado com sucesso!"}), 200
 
 @routes_bp.route('/tarefas', methods=['POST'])
@@ -57,9 +55,8 @@ def criar_tarefa_route():
     if erros:
         return jsonify({"erros": erros}), 400
 
-    resultado = criar_tarefa(dados, usuario_id)
-
-    return jsonify(resultado), 200
+    resultado, status = criar_tarefa(dados, usuario_id)
+    return jsonify(resultado), status
 
 @routes_bp.route('/tarefas', methods=['GET'])
 def get_tarefas():
@@ -68,8 +65,8 @@ def get_tarefas():
     if not usuario_id:
         return jsonify({"message": "Usuário não autenticado!"}), 401
     
-    resultado = listar_tarefas(usuario_id)
-    return jsonify(resultado)
+    resultado, status = listar_tarefas(usuario_id)
+    return jsonify(resultado), status
 
 @routes_bp.route('/tarefas/<int:tarefa_id>', methods=['PUT'])
 def rota_editar_tarefa(tarefa_id):
