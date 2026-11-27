@@ -129,9 +129,28 @@
 .task-fields { display: grid; gap: 16px; min-width: 0; border: 0; margin: 0; padding: 0; }
 .task-fields :is(input, select, textarea) { min-width: 0; }
 .task-fields .field-grid { align-items: start; }
-.category-field { min-width: 0; }
-.category-suggestion { display: block; margin-top: 6px; color: #526055; font-size: .78rem; line-height: 1.4; }
-.category-suggestion:empty { display: none; }
+.category-field {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.category-field__line { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.category-field__label { display: block; margin-bottom: 4px; color: var(--muted); font-size: .8rem; }
+.category-field strong { font-size: .9rem; font-weight: 550; overflow-wrap: anywhere; }
+.category-link {
+  justify-self: start;
+  padding: 6px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: .875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .task-dialog .form-card__header { align-items: center; }
 .task-dialog .form-card__footer, .dialog-actions { display: flex; flex-flow: row wrap; justify-content: flex-end; gap: 10px; }
 .task-dialog .form-card__footer {

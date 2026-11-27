@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { suggestCategory } from '../services/tasksApi.js'
+import { useState } from 'react'
+import CategoryField from './CategoryField.jsx'
 import { CloseIcon, SaveIcon } from './Icons.jsx'
 
 const initialForm = {
@@ -11,8 +11,6 @@ const initialForm = {
   priority: 'Baixa',
   category: '',
 }
-
-const categories = ['Casa', 'Compras', 'Compromissos', 'Estudo', 'Finanças', 'Lazer', 'Pessoal', 'Saúde', 'Trabalho', 'Urgente', 'Outros']
 
 export default function TaskForm({ mode, sourceTask, restored, onDraft, draftStatus, onSubmit, onClose, isSaving, error }) {
   const isEditing = mode === 'edit'
@@ -33,33 +31,15 @@ export default function TaskForm({ mode, sourceTask, restored, onDraft, draftSta
   const requireDescription = !isEditing || Boolean(sourceTask?.description)
   const requireSchedule = !isEditing || Boolean(sourceTask?.dueDate || form.dueDate || form.dueTime)
 
-  const [prediction, setPrediction] = useState(null)
-  const autoDescription = form.category ? '' : form.description.trim()
-  const currentPrediction = prediction?.description === autoDescription ? prediction : null
-
-  useEffect(() => {
-    if (autoDescription.length < 3) return
-    const controller = new AbortController()
-    const timer = window.setTimeout(async () => {
-      try {
-        const category = await suggestCategory(autoDescription, controller.signal)
-        if (!controller.signal.aborted) setPrediction({ description: autoDescription, category })
-      } catch {
-        if (!controller.signal.aborted) setPrediction({ description: autoDescription, failed: true })
-      }
-    }, 450)
-    return () => {
-      window.clearTimeout(timer)
-      controller.abort()
-    }
-  }, [autoDescription])
-
-  function handleChange(event) {
-    const { name, value } = event.target
+  function updateField(name, value) {
     const next = { ...form, [name]: value }
     setForm(next)
     setHasDraft(true)
     onDraft(next)
+  }
+
+  function handleChange(event) {
+    updateField(event.target.name, event.target.value)
   }
 
   async function handleSubmit(event) {
@@ -124,6 +104,9 @@ export default function TaskForm({ mode, sourceTask, restored, onDraft, draftSta
             />
           </label>
 
+          <CategoryField description={form.description} category={form.category}
+            onSelect={category => updateField('category', category)} />
+
           <div className="field-grid">
             <label className="field">
               <span>Data {requireSchedule && <b>*</b>}</span>
@@ -146,34 +129,16 @@ export default function TaskForm({ mode, sourceTask, restored, onDraft, draftSta
               </select>
             </label>
 
-            <div className="category-field">
-              <label className="field">
-                <span>Categoria</span>
-                <select name="category" value={form.category} onChange={handleChange}
-                  aria-describedby={!form.category ? 'category-suggestion' : undefined}>
-                  <option value="">Automática (IA)</option>
-                  {form.category && !categories.includes(form.category) && <option>{form.category}</option>}
-                  {categories.map(category => <option key={category}>{category}</option>)}
+            {isEditing && (
+              <label className="field"><span>Status</span>
+                <select name="status" value={form.status} onChange={handleChange}>
+                  <option value="Pendente">Pendente</option>
+                  <option value="Em Andamento">Em andamento</option>
+                  <option value="Concluida">Concluída</option>
                 </select>
               </label>
-              <small id="category-suggestion" className="category-suggestion" role="status">
-                {!form.category && (autoDescription.length < 3 ? 'Escreva a descrição para receber uma sugestão.'
-                  : currentPrediction?.failed ? 'A prévia está indisponível. Você pode salvar ou escolher uma categoria.'
-                  : currentPrediction ? <>Sugestão da IA · <strong>{currentPrediction.category}</strong></>
-                  : 'Analisando descrição…')}
-              </small>
-            </div>
+            )}
           </div>
-
-          {isEditing && (
-            <label className="field"><span>Status</span>
-              <select name="status" value={form.status} onChange={handleChange}>
-                <option value="Pendente">Pendente</option>
-                <option value="Em Andamento">Em andamento</option>
-                <option value="Concluida">Concluída</option>
-              </select>
-            </label>
-          )}
         </fieldset>
         {hasDraft && draftStatus && <small className="helper-text" role="status">{draftStatus}</small>}
         {error && <p className="dialog-error" role="alert">{error}</p>}
